@@ -4,6 +4,24 @@ import { redirect } from "next/navigation";
 import { createSessionClient } from "@/lib/supabase/server";
 
 /**
+ * Memastikan admin sudah login di server.
+ * Sesuai aturan keamanan #3: setiap aksi yang mengubah data wajib memeriksa status login di server.
+ */
+export async function pastikanAdminLogin() {
+  const supabase = await createSessionClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    throw new Error("Akses ditolak: Anda harus login sebagai admin.");
+  }
+
+  return { supabase, user };
+}
+
+/**
  * Server Action untuk memproses login admin menggunakan Supabase Auth.
  */
 export async function login(prevState, formData) {
