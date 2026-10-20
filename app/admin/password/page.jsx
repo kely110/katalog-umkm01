@@ -1,13 +1,19 @@
-"use client";
-
-import { useActionState } from "react";
+import { redirect } from "next/navigation";
 import NavAdmin from "@/components/NavAdmin";
-import Input from "@/components/Input";
-import Tombol from "@/components/Tombol";
-import { gantiPassword } from "@/app/admin/actions";
+import FormGantiPassword from "./FormGantiPassword";
+import { createSessionClient } from "@/lib/supabase/server";
 
-export default function HalamanGantiPassword() {
-  const [state, formAction, isPending] = useActionState(gantiPassword, null);
+export const dynamic = "force-dynamic";
+
+export default async function HalamanGantiPassword() {
+  const supabase = await createSessionClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/admin/login");
+  }
 
   return (
     <div className="flex flex-col gap-6 py-8">
@@ -18,40 +24,7 @@ export default function HalamanGantiPassword() {
           Ganti password bawaan segera setelah pertama kali masuk. Minimal 8 karakter.
         </p>
       </div>
-
-      {state?.error && (
-        <div className="max-w-sm rounded-lg border border-garis bg-permukaan p-3 text-sm text-bahaya">
-          {state.error}
-        </div>
-      )}
-
-      {state?.success && (
-        <div className="max-w-sm rounded-lg border border-garis bg-permukaan p-3 text-sm font-semibold text-utama">
-          {state.message}
-        </div>
-      )}
-
-      <form action={formAction} className="flex max-w-sm flex-col gap-4">
-        <Input
-          label="Password baru"
-          name="password_baru"
-          type="password"
-          autoComplete="new-password"
-          minLength={8}
-          required
-        />
-        <Input
-          label="Ulangi password baru"
-          name="konfirmasi_password"
-          type="password"
-          autoComplete="new-password"
-          minLength={8}
-          required
-        />
-        <Tombol type="submit" disabled={isPending} className="self-start">
-          {isPending ? "Menyimpan..." : "Simpan password"}
-        </Tombol>
-      </form>
+      <FormGantiPassword />
     </div>
   );
 }

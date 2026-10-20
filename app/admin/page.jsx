@@ -1,9 +1,22 @@
+import { redirect } from "next/navigation";
 import NavAdmin from "@/components/NavAdmin";
 import TabelProduk from "@/components/TabelProduk";
 import Tombol from "@/components/Tombol";
+import { createSessionClient } from "@/lib/supabase/server";
 import { produkContoh } from "@/lib/data-contoh";
 
-export default function HalamanAdmin() {
+export const dynamic = "force-dynamic";
+
+export default async function HalamanAdmin() {
+  const supabase = await createSessionClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/admin/login");
+  }
+
   // US-07 (bonus): daftar produk masih memakai data contoh, belum dari database.
   const daftarProduk = produkContoh;
 

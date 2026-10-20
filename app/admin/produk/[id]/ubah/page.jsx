@@ -1,13 +1,23 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import NavAdmin from "@/components/NavAdmin";
 import FormProduk from "@/components/FormProduk";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerClient, createSessionClient } from "@/lib/supabase/server";
 import { ubahProduk } from "@/app/admin/actions";
 
 export const dynamic = "force-dynamic";
 
 // US-09 (bonus di jalur offline): ubah produk.
 export default async function HalamanUbahProduk({ params }) {
+  // Proteksi server-side: hanya admin yang login yang boleh membuka halaman ini (US-06)
+  const sessionClient = await createSessionClient();
+  const {
+    data: { user },
+  } = await sessionClient.auth.getUser();
+
+  if (!user) {
+    redirect("/admin/login");
+  }
+
   const { id } = await params;
   const supabase = createServerClient();
 

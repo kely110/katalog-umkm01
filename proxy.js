@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
 /**
- * Proxy / Middleware Next.js 16 untuk memproteksi seluruh rute di bawah /admin.
+ * Proxy / Middleware Next.js untuk memproteksi seluruh rute di bawah /admin (US-06).
  * Semua rute /admin (kecuali /admin/login) wajib login dengan Supabase Auth.
  * Jika belum login, pengunjung dialihkan ke /admin/login.
  */
@@ -51,7 +51,12 @@ export async function proxy(request) {
   if (path.startsWith("/admin") && !isLoginPage) {
     if (!user) {
       const loginUrl = new URL("/admin/login", request.url);
-      return NextResponse.redirect(loginUrl);
+      const redirectResponse = NextResponse.redirect(loginUrl);
+      // Salin cookies jika ada pembaruan sesi
+      response.cookies.getAll().forEach((cookie) => {
+        redirectResponse.cookies.set(cookie.name, cookie.value);
+      });
+      return redirectResponse;
     }
   }
 
@@ -62,6 +67,5 @@ export const middleware = proxy;
 export default proxy;
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin", "/admin/:path*"],
 };
-
