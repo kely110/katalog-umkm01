@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import PilihPesanan from "@/components/PilihPesanan";
 import TombolWhatsApp from "@/components/TombolWhatsApp";
 import { createServerClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/format";
@@ -52,3 +51,4 @@ export default async function HalamanDetailProduk({ params }) {
     </article>
   );
 }
+

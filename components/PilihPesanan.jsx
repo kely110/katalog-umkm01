@@ -17,8 +17,8 @@ export default function PilihPesanan({ produk }) {
     `Jumlah: ${jumlah}\n` +
     `Total: ${formatRupiah(total)}`;
 
-  // ganti "whatsapp" kalau nama properti di lib/toko.js berbeda
-  const link = `https://wa.me/${toko.whatsapp}?text=${encodeURIComponent(pesan)}`;
+  const nomorWa = String(toko.nomorWhatsApp || toko.whatsapp || "").replace(/\D/g, "");
+  const link = `https://wa.me/${nomorWa}?text=${encodeURIComponent(pesan)}`;
 
   return (
     <div className="mt-2 flex flex-col gap-5">

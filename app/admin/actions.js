@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createSessionClient } from "@/lib/supabase/server";
 
 /**
@@ -135,3 +136,76 @@ export async function gantiPassword(prevState, formData) {
 }
 
 export const updatePassword = gantiPassword;
+
+/**
+ * Server Action untuk mengubah produk (US-09).
+ * Terlindungi login: memeriksa sesi admin di server sebelum mengubah database.
+ */
+export async function ubahProduk(idOrFormData, maybeFormData) {
+  const supabase = await createSessionClient();
+
+  // 1. Wajib periksa bahwa admin sudah login (Aturan Keamanan 3)
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("Akses ditolak: Anda harus login sebagai admin.");
+  }
+
+  let id = null;
+  let formData = null;
+
+  if (maybeFormData instanceof FormData) {
+    id = idOrFormData;
+    formData = maybeFormData;
+  } else if (idOrFormData instanceof FormData) {
+    formData = idOrFormData;
+    id = formData.get("id");
+  }
+
+  if (!id && formData) {
+    id = formData.get("id");
+  }
+
+  if (!id) {
+    throw new Error("ID produk tidak ditemukan.");
+  }
+
+  const nama = formData.get("nama")?.toString()?.trim();
+  const hargaRaw = formData.get("harga");
+  const kategori = formData.get("kategori")?.toString()?.trim() || null;
+  const foto_url = formData.get("foto_url")?.toString()?.trim() || null;
+  const deskripsi = formData.get("deskripsi")?.toString()?.trim() || null;
+
+  if (!nama) {
+    throw new Error("Nama produk wajib diisi.");
+  }
+
+  const harga = parseInt(hargaRaw, 10);
+  if (isNaN(harga) || harga < 0) {
+    throw new Error("Harga harus berupa angka dan tidak boleh negatif.");
+  }
+
+  // 2. Simpan perubahan ke database Supabase
+  const { error } = await supabase
+    .from("produk")
+    .update({
+      nama,
+      harga,
+      kategori,
+      foto_url,
+      deskripsi,
+    })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(`Gagal mengubah data produk: ${error.message}`);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath(`/produk/${id}`);
+  redirect("/admin");
+}
